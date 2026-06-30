@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameStock AI Picker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --gold: #D4A017;
+    --gold-dim: #8B6A0F;
+    --green: #00FF88;
+    --red: #FF4455;
+    --bg: #0A0A0A;
+    --surface: #111111;
+    --surface2: #1A1A1A;
+    --border: #222222;
+    --text: #F0F0F0;
+    --muted: #666666;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Ticker tape */
+  .ticker-wrap {
+    background: #0D0D0D;
+    border-bottom: 1px solid var(--gold-dim);
+    overflow: hidden;
+    height: 30px;
+    display: flex;
+    align-items: center;
+  }
+  .ticker {
+    display: flex;
+    gap: 48px;
+    white-space: nowrap;
+    animation: ticker 28s linear infinite;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .ticker span.up { color: var(--green); }
+  .ticker span.dn { color: var(--red); }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* Header */
+  .header {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--gold), #F0C040);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-pot {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .badge-pot strong { color: var(--green); }
+
+  /* Tournament card */
+  .tournament-banner {
+    margin: 16px 20px;
+    background: linear-gradient(135deg, #1A1200 0%, #0D0D0D 60%);
+    border: 1px solid var(--gold-dim);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .tourn-dot {
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+  .tourn-info { flex: 1; }
+  .tourn-name { font-size: 14px; font-weight: 600; }
+  .tourn-meta { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+  .tourn-mode {
+    background: #003322;
+    color: var(--green);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #005533;
+  }
+
+  /* Controls */
+  .controls {
+    padding: 0 20px 16px;
+  }
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 10px;
+  }
+  .strategy-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .pill {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .pill:hover { border-color: var(--gold-dim); color: var(--text); }
+  .pill.active {
+    background: linear-gradient(135deg, #2A1A00, #1A1000);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .analyze-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--gold), #C09010);
+    color: #000;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .analyze-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(212,160,23,0.3); }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Loading */
+  .loading {
+    display: none;
+    padding: 32px 20px;
+    text-align: center;
+  }
+  .loading.show { display: block; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--muted); }
+
+  /* Results */
+  .results { padding: 0 20px 32px; display: none; }
+  .results.show { display: block; }
+
+  .summary-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #C0C0C0;
+  }
+  .summary-box strong { color: var(--text); }
+
+  .picks-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .picks-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .stock-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stock-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+  .stock-card.rank-1::before { background: var(--gold); }
+  .stock-card.rank-2::before { background: #A0A0A0; }
+  .stock-card.rank-3::before { background: #8B5E3C; }
+  .stock-card.rank-4::before, .stock-card.rank-other::before { background: var(--border); }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .rank-badge {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+  }
+  .rank-1 .rank-badge { background: rgba(212,160,23,0.15); color: var(--gold); border: 1px solid var(--gold-dim); }
+  .rank-2 .rank-badge { background: rgba(160,160,160,0.1); color: #A0A0A0; border: 1px solid #444; }
+  .rank-3 .rank-badge { background: rgba(139,94,60,0.1); color: #C08050; border: 1px solid #6B3E1C; }
+  .rank-4 .rank-badge, .rank-other .rank-badge { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  .stock-info { flex: 1; }
+  .stock-ticker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .stock-name { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .score-bar-wrap { flex-shrink: 0; text-align: right; }
+  .score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--green);
+  }
+  .score-label { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+
+  .confidence-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .confidence-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    transition: width 1s ease;
+  }
+
+  .card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .tag {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .tag-momentum { background: rgba(0,255,136,0.08); color: #00CC66; border: 1px solid #003322; }
+  .tag-catalyst { background: rgba(212,160,23,0.08); color: var(--gold); border: 1px solid #443300; }
+  .tag-volatile { background: rgba(255,68,85,0.08); color: #FF6677; border: 1px solid #441122; }
+  .tag-safe { background: rgba(100,150,255,0.08); color: #8AAEFF; border: 1px solid #1A2244; }
+  .tag-social { background: rgba(180,100,255,0.08); color: #CC88FF; border: 1px solid #330055; }
+  .tag-squeeze { background: rgba(255,68,85,0.10); color: #FF6677; border: 1px solid #441122; }
+  .tag-biotech { background: rgba(0,200,255,0.08); color: #66CCFF; border: 1px solid #003344; }
+  .tag-earnings { background: rgba(212,160,23,0.08); color: var(--gold); border: 1px solid #443300; }
+  .move-thesis {
+    font-size: 11px;
+    color: var(--gold);
+    background: rgba(212,160,23,0.06);
+    border: 1px solid #332200;
+    border-radius: 6px;
+    padding: 7px 9px;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .move-thesis strong { color: var(--gold); }
+  .target-banner {
+    margin: 0 20px 14px;
+    background: rgba(255,68,85,0.06);
+    border: 1px solid #441122;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: #FF8899;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+  .target-banner strong { color: var(--red); }
+  .cap-badge { display:inline-block; font-size:10px; letter-spacing:0.5px; font-weight:700; padding:2px 7px; border-radius:4px; margin-left:8px; vertical-align:middle; text-transform:uppercase; }
+  .cap-large { background: rgba(100,150,255,0.10); color:#8AAEFF; border:1px solid #1A2244; }
+  .cap-mid { background: rgba(212,160,23,0.10); color: var(--gold); border:1px solid #443300; }
+  .cap-small { background: rgba(255,68,85,0.10); color:#FF6677; border:1px solid #441122; }
+
+  .reasoning {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.55;
+  }
+  .reasoning strong { color: #B0B0B0; }
+
+  /* Portfolio allocation */
+  .allocation-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 20px;
+  }
+  .alloc-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .alloc-title span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .alloc-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .alloc-ticker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    width: 52px;
+    flex-shrink: 0;
+  }
+  .alloc-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .alloc-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  }
+  .alloc-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .alloc-cash {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    width: 60px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .disclaimer {
+    margin-top: 20px;
+    font-size: 10px;
+    color: #444;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin: 0 20px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .tab-btn.active {
+    background: linear-gradient(135deg, #2A1A00, #1A1000);
+    color: var(--gold);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Winners tracker */
+  .winners-header {
+    padding: 0 20px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .winners-sub { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .refresh-btn {
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .refresh-btn:hover { border-color: var(--gold-dim); }
+  .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .winner-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 0 20px 10px;
+  }
+  .winner-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .winner-ticker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .winner-name { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .winner-move {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .winner-catalyst {
+    font-size: 12px;
+    color: #C0C0C0;
+    line-height: 1.5;
+    background: rgba(0,255,136,0.05);
+    border: 1px solid #0F2A1A;
+    border-radius: 6px;
+    padding: 7px 9px;
+    margin-top: 6px;
+  }
+  .winner-catalyst strong { color: var(--green); }
+  .winners-empty {
+    padding: 32px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Error */
+  .error-box {
+    display: none;
+    margin: 0 20px;
+    background: rgba(255,68,85,0.05);
+    border: 1px solid rgba(255,68,85,0.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #FF8888;
+  }
+  .error-box.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Ticker tape -->
+<div class="ticker-wrap">
+  <div class="ticker" id="tickerTape">
+    <span>SMCI <span class="up">▲14.2%</span></span>
+    <span>IONQ <span class="up">▲9.1%</span></span>
+    <span>RGTI <span class="dn">▼6.8%</span></span>
+    <span>SAVA <span class="up">▲22.4%</span></span>
+    <span>BBAI <span class="up">▲11.9%</span></span>
+    <span>NVAX <span class="dn">▼3.3%</span></span>
+    <span>SOUN <span class="up">▲7.7%</span></span>
+    <span>ACHR <span class="up">▲5.1%</span></span>
+    <span>CRBP <span class="dn">▼4.6%</span></span>
+    <span>MARA <span class="up">▲8.4%</span></span>
+    <!-- duplicate for seamless loop -->
+    <span>SMCI <span class="up">▲14.2%</span></span>
+    <span>IONQ <span class="up">▲9.1%</span></span>
+    <span>RGTI <span class="dn">▼6.8%</span></span>
+    <span>SAVA <span class="up">▲22.4%</span></span>
+    <span>BBAI <span class="up">▲11.9%</span></span>
+    <span>NVAX <span class="dn">▼3.3%</span></span>
+    <span>SOUN <span class="up">▲7.7%</span></span>
+    <span>ACHR <span class="up">▲5.1%</span></span>
+    <span>CRBP <span class="dn">▼4.6%</span></span>
+    <span>MARA <span class="up">▲8.4%</span></span>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">📈</div>
+    <div>
+      <div class="logo-text">GameStock AI</div>
+      <div class="logo-sub">Tournament Picker</div>
+    </div>
+  </div>
+  <div class="badge-pot">Pot <strong>$68</strong> · Top 5</div>
+</div>
+
+<!-- Tournament banner -->
+<div class="tournament-banner">
+  <div class="tourn-dot"></div>
+  <div class="tourn-info">
+    <div class="tourn-name">Fast Money – Tue</div>
+    <div class="tourn-meta">1 Day · 1,000+ players daily · $1 entry · Pick 2–4 stocks</div>
+  </div>
+  <div class="tourn-mode">BULLISH</div>
+</div>
+
+<div class="target-banner">🎯 WIN TARGET: <strong>+30% portfolio gain</strong> by market close — large caps can't get you there. Picks below are restricted to small/mid-cap movers.</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" data-tab="picker">🎯 Get Picks</button>
+  <button class="tab-btn" data-tab="winners">🏆 Today's 30%+ Winners</button>
+</div>
+
+<!-- PICKER TAB -->
+<div class="tab-panel active" id="tab-picker">
+  <!-- Controls -->
+  <div class="controls">
+    <div class="section-label">Strategy Focus</div>
+    <div class="strategy-pills">
+      <button class="pill active" data-strategy="balanced">Balanced</button>
+      <button class="pill" data-strategy="highmomentum">High Momentum</button>
+      <button class="pill" data-strategy="catalyst">News Catalyst</button>
+      <button class="pill" data-strategy="social">Social Buzz</button>
+      <button class="pill" data-strategy="safe">Low Risk</button>
+    </div>
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+      <span>⚡</span> Get AI Pick for Today
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Scanning real-time market data, pre-market gappers, and breaking catalysts…</div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- Results -->
+  <div class="results" id="results"></div>
+</div>
+
+<!-- WINNERS TAB -->
+<div class="tab-panel" id="tab-winners">
+  <div class="winners-header">
+    <div class="winners-sub" id="winnersUpdated">Live-tracked stocks up 30%+ today</div>
+    <button class="refresh-btn" id="winnersRefreshBtn" onclick="loadWinners()">↻ Refresh</button>
+  </div>
+
+  <div class="loading" id="winnersLoading">
+    <div class="spinner"></div>
+    <div class="loading-text">Searching for today's confirmed 30%+ movers…</div>
+  </div>
+
+  <div class="error-box" id="winnersErrorBox"></div>
+
+  <div id="winnersList"></div>
+</div>
+
+<script>
+let selectedStrategy = 'balanced';
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'winners' && !document.getElementById('winnersList').dataset.loaded) {
+      loadWinners();
+    }
+  });
+});
+
+document.querySelectorAll('.pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    selectedStrategy = p.dataset.strategy;
+  });
+});
+
+async function analyze() {
+  const btn = document.getElementById('analyzeBtn');
+  const loading = document.getElementById('loading');
+  const results = document.getElementById('results');
+  const errorBox = document.getElementById('errorBox');
+
+  btn.disabled = true;
+  loading.classList.add('show');
+  results.classList.remove('show');
+  errorBox.classList.remove('show');
+  results.innerHTML = '';
+
+  const strategyDescriptions = {
+    balanced: 'a balanced mix of high-momentum mid/small-cap movers that realistically have a shot at 30%+ single-day gains, without going so deep into illiquid microcaps that the move is unreliable',
+    highmomentum: 'maximum momentum plays — small/mid-cap stocks already showing explosive recent price action (gap-ups, multi-day runners, high relative volume) that could realistically extend 30%+ further today',
+    catalyst: 'small/mid-cap stocks with a specific, dated catalyst hitting TODAY (earnings beat, FDA decision, contract win, short squeeze setup, guidance raise) capable of producing a 30%+ single-day move',
+    social: 'small/mid-cap stocks with explosive retail/social buzz today (Reddit, Twitter/X, StockTwits trending, unusual options activity) — the meme/momentum names most likely to spike 30%+ intraday',
+    safe: 'still must hit 30%+ to win — so even on this strategy, prioritize the more "established" small/mid-cap names with a real catalyst over the wildest speculative tickers, rather than blue chips, which cannot realistically move 30% in a day'
+  };
+
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+  const prompt = `You are an expert stock analyst helping a user win a 1-day fantasy stock tournament called GameStock.
+
+Tournament rules:
+- Bullish tournament (you want stocks to go UP today)
+- Pick 2–4 stocks from your $1M virtual cash
+- ALL cash must be allocated (any unused cash = disqualification)
+- 1,000+ players join daily — ranking is by highest % portfolio gain (PnL) at market close
+- CRITICAL WIN CONDITION: the player needs their OVERALL PORTFOLIO to be up at least 30% by market close TODAY to have a realistic shot at winning. This is not a "beat the S&P" game — it requires genuine 30%+ single-day portfolio appreciation.
+
+Today's date: ${today}
+User's strategy: ${strategyDescriptions[selectedStrategy]}
+
+MARKET CAP CONSTRAINT (read carefully): Mega-cap and large-cap stocks (NVDA, AAPL, MSFT, AMZN, GOOGL, META, etc.) almost never move 30%+ in a single day — their daily moves are typically 1-4%, even on huge news. Picking them makes winning this tournament statistically impossible. DO NOT recommend large-cap (>$10B market cap) stocks under any circumstances for this tournament, even for the "Low Risk" strategy.
+
+Instead, focus exclusively on:
+- Small-cap (<$2B market cap): the primary hunting ground — biotech catalyst plays, short-squeeze candidates, low-float runners, post-earnings small caps, recent IPOs with momentum. These are the names realistically capable of 30-100%+ single-day moves.
+- Select mid-cap (~$2B-$10B): only if there's a major dated catalyst today (FDA approval, major earnings beat + guidance raise, M&A news, short squeeze) that could plausibly drive a 30%+ move despite the larger size.
+
+For each pick, you must be able to articulate a realistic mechanical path to a 30%+ move TODAY specifically (e.g. "this is a low-float biotech with a Phase 3 readout due before market open" or "this stock already gapped up 18% pre-market on an FDA designation and has a history of extending"). Avoid generic "this is a good company" reasoning — that does not produce 30% days.
+
+Use web search aggressively (multiple searches) to pull REAL, CURRENT data before answering — do not rely on stale knowledge:
+- Search for "premarket movers today", "biggest stock gainers today", "unusual options activity today", and similar live-scanner queries.
+- For each candidate ticker, search its name + "stock news" or "stock catalyst" to confirm there's an actual, dated, named catalyst (FDA decision, earnings date, contract, short interest %, float size) hitting today or very recently.
+- Pull the most recent verifiable price/volume data you can find (pre-market % change, last close, relative volume, float size, short interest) and include concrete numbers in your reasoning rather than vague language.
+- If you cannot verify a real catalyst or current price action for a candidate, drop it rather than including a purely speculative name.
+
+Your task: Recommend the BEST 4 stocks to pick for today based on current market conditions, recent news, momentum, and the given strategy. Use your knowledge of recent market conditions up to your cutoff, supplemented by web search for today's actual movers.
+
+Respond ONLY with valid JSON in this exact format (no markdown, no extra text):
+{
+  "marketContext": "2-sentence summary of today's small/mid-cap market environment relevant to this strategy",
+  "picks": [
+    {
+      "ticker": "XYZ",
+      "companyName": "Example Corp",
+      "capSize": "small",
+      "score": 94,
+      "confidence": 0.62,
+      "allocation": 35,
+      "moveThesis": "the specific mechanical reason this stock could realistically move 30%+ TODAY",
+      "catalystTime": "e.g. 'Pre-market FDA news 6:45am ET' or 'Earnings reported after close yesterday, guidance raise'",
+      "currentData": "e.g. 'Up 18% pre-market on 4x avg volume, 12M float' — real numbers if found via search, otherwise best estimate noted as approximate",
+      "tags": ["momentum", "catalyst"],
+      "reasoning": "2-3 sentence specific reasoning for why this stock will go up TODAY"
+    }
+  ],
+  "portfolioNote": "1 sentence on why this specific 2-4 stock combo gives the best realistic shot at a 30%+ portfolio day to beat 1,000+ competitors"
+}
+
+capSize must be one of: mid, small (large-cap picks are forbidden for this tournament)
+Tags must be chosen from: momentum, catalyst, volatile, social, squeeze, biotech, earnings
+confidence reflects the realistic probability of hitting 30%+ specifically — be honest; these are inherently low-probability, high-payoff plays, so most confidences should be modest (e.g. 0.2-0.6), not falsely high.
+Score is 0-100 (higher = stronger pick for today's 30%+ goal).
+Allocations must sum to 100.
+Recommend exactly 4 picks ordered by score descending.
+Allocations: each must be at minimum 20% (since you need 2-4 stocks and all cash must be used).`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 4096,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error((data && data.error && data.error.message) || `Request failed (${response.status})`);
+    }
+
+    // Extract text from potentially mixed content blocks
+    const fullText = (data.content || [])
+      .map(b => b.type === 'text' ? b.text : '')
+      .join('');
+
+    const cleaned = fullText.replace(/```json|```/g, '').trim();
+
+    // Extract the first balanced top-level JSON object (robust to any
+    // stray braces in citation text or commentary around it)
+    function extractJsonObject(str) {
+      const start = str.indexOf('{');
+      if (start === -1) return null;
+      let depth = 0;
+      let inString = false;
+      let escape = false;
+      for (let i = start; i < str.length; i++) {
+        const ch = str[i];
+        if (inString) {
+          if (escape) { escape = false; }
+          else if (ch === '\\') { escape = true; }
+          else if (ch === '"') { inString = false; }
+          continue;
+        }
+        if (ch === '"') { inString = true; continue; }
+        if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) return str.slice(start, i + 1);
+        }
+      }
+      return null;
+    }
+
+    const jsonStr = extractJsonObject(cleaned);
+    if (!jsonStr) throw new Error('No JSON in response: ' + cleaned.slice(0, 200));
+    const parsed = JSON.parse(jsonStr);
+
+    renderResults(parsed);
+  } catch (err) {
+    errorBox.textContent = 'Could not fetch AI analysis. Check your connection and try again. (' + err.message + ')';
+    errorBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    loading.classList.remove('show');
+  }
+}
+
+function tagClass(tag) {
+  const map = { momentum: 'tag-momentum', catalyst: 'tag-catalyst', volatile: 'tag-volatile', safe: 'tag-safe', social: 'tag-social', squeeze: 'tag-squeeze', biotech: 'tag-biotech', earnings: 'tag-earnings' };
+  return map[tag] || 'tag-safe';
+}
+
+function renderResults(data) {
+  const results = document.getElementById('results');
+  const picks = data.picks || [];
+
+  const rankClass = (i) => i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other';
+  const rankLabel = (i) => i === 0 ? '#1' : i === 1 ? '#2' : i === 2 ? '#3' : `#${i+1}`;
+
+  let cardsHTML = picks.map((p, i) => `
+    <div class="stock-card ${rankClass(i)}">
+      <div class="card-top">
+        <div class="rank-badge">${rankLabel(i)}</div>
+        <div class="stock-info">
+          <div class="stock-ticker">${p.ticker}${p.capSize ? `<span class="cap-badge cap-${p.capSize}">${p.capSize} cap</span>` : ''}</div>
+          <div class="stock-name">${p.companyName}</div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-num">${p.score}</div>
+          <div class="score-label">SCORE</div>
+        </div>
+      </div>
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width: ${Math.round(p.confidence * 100)}%"></div>
+      </div>
+      <div class="card-tags">
+        ${(p.tags || []).map(t => `<span class="tag ${tagClass(t)}">${t.toUpperCase()}</span>`).join('')}
+        <span class="tag tag-safe" style="background:rgba(0,255,136,0.05);color:#667;border-color:#1A2A1A;">${Math.round(p.confidence * 100)}% conf</span>
+      </div>
+      ${p.moveThesis ? `<div class="move-thesis"><strong>30% PATH:</strong> ${p.moveThesis}</div>` : ''}
+      ${(p.catalystTime || p.currentData) ? `<div class="winner-catalyst" style="margin-bottom:8px;">${p.catalystTime ? `<strong>⏱ ${p.catalystTime}</strong>` : ''}${p.catalystTime && p.currentData ? ' · ' : ''}${p.currentData || ''}</div>` : ''}
+      <div class="reasoning">${p.reasoning}</div>
+    </div>
+  `).join('');
+
+  let allocHTML = picks.map(p => `
+    <div class="alloc-row">
+      <div class="alloc-ticker">${p.ticker}</div>
+      <div class="alloc-bar-wrap"><div class="alloc-bar" style="width:${p.allocation}%"></div></div>
+      <div class="alloc-pct">${p.allocation}%</div>
+      <div class="alloc-cash">$${Math.round(p.allocation * 10000).toLocaleString()}</div>
+    </div>
+  `).join('');
+
+  results.innerHTML = `
+    <div class="summary-box">
+      <strong>Market Context:</strong> ${data.marketContext}
+    </div>
+    <div class="picks-label">
+      <div class="section-label">Top Picks</div>
+      <div class="picks-count">${picks.length} STOCKS · $1M PORTFOLIO</div>
+    </div>
+    ${cardsHTML}
+    <div class="allocation-box">
+      <div class="alloc-title">Portfolio Split <span>of $1,000,000</span></div>
+      ${allocHTML}
+    </div>
+    ${data.portfolioNote ? `<div class="summary-box" style="margin-top:12px;border-left-color:#00FF88">${data.portfolioNote}</div>` : ''}
+    <div class="disclaimer">AI analysis only — not financial advice. Past performance ≠ future results. GameStock is a game of skill and chance.</div>
+  `;
+
+  results.classList.add('show');
+}
+
+async function loadWinners() {
+  const btn = document.getElementById('winnersRefreshBtn');
+  const loading = document.getElementById('winnersLoading');
+  const errorBox = document.getElementById('winnersErrorBox');
+  const list = document.getElementById('winnersList');
+  const updated = document.getElementById('winnersUpdated');
+
+  btn.disabled = true;
+  loading.classList.add('show');
+  errorBox.classList.remove('show');
+  list.innerHTML = '';
+
+  const now = new Date();
+  const today = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  const prompt = `You are a real-time stock market scanner. Today is ${today}, current time approximately ${timeStr} (assume US Eastern market hours unless clearly after-hours).
+
+Use web search aggressively (search for "biggest stock gainers today", "stocks up today percent", "today's market movers", "premarket gainers today", etc., and follow up by searching individual tickers for news) to find REAL stocks that are confirmed to be UP 30% OR MORE today (intraday or pre-market, as of right now), specifically small/mid-cap stocks (large caps essentially never move this much).
+
+For each one found, verify the move with a specific source/data point and identify the actual news catalyst driving it (FDA news, earnings, contract, short squeeze, M&A, etc.) — not speculation.
+
+This is for a fantasy stock trading game called GameStock — players who picked these stocks today are "winning" big, and this list shows other players (and Claude) what actually moved so the community knows who hit the 30%+ target.
+
+If today is a weekend, market holiday, or markets haven't opened yet, search for the most recent trading day's 30%+ movers instead and clearly say so in the asOf field.
+
+Respond ONLY with valid JSON, no markdown:
+{
+  "asOf": "short string describing what date/time this data reflects, e.g. 'Today, intraday as of 11:40am ET' or 'Friday's close (markets closed today)'",
+  "winners": [
+    {
+      "ticker": "XYZ",
+      "companyName": "Example Corp",
+      "movePercent": 47.2,
+      "catalyst": "1-2 sentence specific reason this stock is up today, with the concrete news event"
+    }
+  ]
+}
+Find as many genuine 30%+ movers as you can (aim for 5-12 if they exist), ordered by movePercent descending. Only include stocks you can actually verify via search — do not fabricate movers or percentages.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 4096,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error((data && data.error && data.error.message) || `Request failed (${response.status})`);
+    }
+
+    const fullText = (data.content || []).map(b => b.type === 'text' ? b.text : '').join('');
+    const cleaned = fullText.replace(/```json|```/g, '').trim();
+
+    function extractJsonObject(str) {
+      const start = str.indexOf('{');
+      if (start === -1) return null;
+      let depth = 0, inString = false, escape = false;
+      for (let i = start; i < str.length; i++) {
+        const ch = str[i];
+        if (inString) {
+          if (escape) { escape = false; }
+          else if (ch === '\\') { escape = true; }
+          else if (ch === '"') { inString = false; }
+          continue;
+        }
+        if (ch === '"') { inString = true; continue; }
+        if (ch === '{') depth++;
+        else if (ch === '}') { depth--; if (depth === 0) return str.slice(start, i + 1); }
+      }
+      return null;
+    }
+
+    const jsonStr = extractJsonObject(cleaned);
+    if (!jsonStr) throw new Error('No JSON in response: ' + cleaned.slice(0, 200));
+    const parsed = JSON.parse(jsonStr);
+
+    renderWinners(parsed);
+  } catch (err) {
+    errorBox.textContent = 'Could not fetch live winners. Check your connection and try again. (' + err.message + ')';
+    errorBox.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    loading.classList.remove('show');
+  }
+}
+
+function renderWinners(data) {
+  const list = document.getElementById('winnersList');
+  const updated = document.getElementById('winnersUpdated');
+  const winners = data.winners || [];
+
+  list.dataset.loaded = '1';
+  updated.textContent = data.asOf || 'Live-tracked stocks up 30%+ today';
+
+  if (!winners.length) {
+    list.innerHTML = `<div class="winners-empty">No confirmed 30%+ movers found right now. Check back after market open or hit Refresh.</div>`;
+    return;
+  }
+
+  list.innerHTML = winners.map(w => `
+    <div class="winner-card">
+      <div class="winner-top">
+        <div>
+          <div class="winner-ticker">${w.ticker}</div>
+          <div class="winner-name">${w.companyName || ''}</div>
+        </div>
+        <div class="winner-move">▲${typeof w.movePercent === 'number' ? w.movePercent.toFixed(1) : w.movePercent}%</div>
+      </div>
+      <div class="winner-catalyst"><strong>Catalyst:</strong> ${w.catalyst || 'See ticker for details'}</div>
+    </div>
+  `).join('') + `<div class="disclaimer">Tracked via live web search — verify with your broker before trusting for trades. Not financial advice.</div>`;
+}
+</script>
+</body>
+</html>
