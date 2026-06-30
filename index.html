@@ -587,7 +587,7 @@
       <div class="logo-sub">Tournament Picker</div>
     </div>
   </div>
-  <div class="badge-pot">Pot <strong>$68</strong> · Top 5</div>
+  <div class="badge-pot">Leaderboard <strong>Top 5</strong> · Free to Play</div>
 </div>
 
 <!-- Tournament banner -->
@@ -595,7 +595,7 @@
   <div class="tourn-dot"></div>
   <div class="tourn-info">
     <div class="tourn-name">Fast Money – Tue</div>
-    <div class="tourn-meta">1 Day · 1,000+ players daily · $1 entry · Pick 2–4 stocks</div>
+    <div class="tourn-meta">1 Day · 1,000+ players daily · Free entry · Pick 2–4 stocks</div>
   </div>
   <div class="tourn-mode">BULLISH</div>
 </div>
@@ -758,7 +758,7 @@ Recommend exactly 4 picks ordered by score descending.
 Allocations: each must be at minimum 20% (since you need 2-4 stocks and all cash must be used).`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("/api/claude", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -930,7 +930,7 @@ Respond ONLY with valid JSON, no markdown:
 Find as many genuine 30%+ movers as you can (aim for 5-12 if they exist), ordered by movePercent descending. Only include stocks you can actually verify via search — do not fabricate movers or percentages.`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("/api/claude", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
